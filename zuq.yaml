@@ -1,0 +1,10 @@
+name: lanthic_studio
+state_management: riverpod
+router: go_router
+preset: default
+modules:
+  - routing
+  - theme
+  - storage
+  - analytics
+  - networking

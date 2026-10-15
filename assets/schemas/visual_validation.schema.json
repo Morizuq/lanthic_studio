@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisualValidation",
+  "type": "object",
+  "properties": {
+    "visual_validation": { "type": "object" },
+    "story": { "type": "object" },
+    "summary": { "type": "object" },
+    "validations": { "type": "array" },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id", "verdict"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "asset_path": { "type": "string" },
+          "verdict": { "type": "string" },
+          "evaluations": { "type": "object" },
+          "remediation": { "type": "object" }
+        }
+      }
+    }
+  }
+}

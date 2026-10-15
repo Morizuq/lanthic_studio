@@ -1,0 +1,13 @@
+schema_version: "1.0.0"
+story_id: "story_deep_orbit"
+run_id: "run_20261014_01"
+provider: "flux"
+title: "Deep Orbit Protocol"
+files:
+  scenes: "scenes.yaml"
+  continuity: "continuity.yaml"
+  visual_direction: "visual_direction.yaml"
+  image_prompts: "image_prompts.yaml"
+  provider_request: "provider_request.yaml"
+  generation_manifest: "generation_manifest.yaml"
+  visual_validation: "visual_validation.yaml"

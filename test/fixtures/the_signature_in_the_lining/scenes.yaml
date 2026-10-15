@@ -1,0 +1,124 @@
+mode: extraction
+
+story:
+  title: "The Signature in the Lining"
+  source: "the-blind-stitch.md"
+  scene_count: 2
+
+scenes:
+  - id: scene_01
+    scene_id: night_outsourcing
+    stage: execution_decision
+    purpose: trigger_complication
+    location:
+      entity: basseys_workshop
+      name: "Bassey's Workshop"
+      confidence: explicit
+    time:
+      timeline: night
+      period: "Two days before the feast"
+      day_phase: night
+      confidence: explicit
+    entities:
+      - id: tunde
+        role: protagonist
+        action: "hands gold-threaded silk to Bassey in the dark"
+        confidence: explicit
+      - id: bassey
+        role: antagonist
+        action: "receives the commission silently"
+        confidence: explicit
+    objects:
+      - id: wedding_robe
+        role: raw_material
+        action: "delivered as unfinished bolt"
+        confidence: explicit
+    event:
+      value: "Tunde secretly visits Bassey's workshop at night and pays him to sew the wedding robe."
+      confidence: explicit
+    trigger:
+      value: "Tunde realizes he cannot execute the blind stitch himself without ruining the silk."
+      confidence: explicit
+    motivation:
+      value: "Fear of public humiliation and commercial ruin."
+      confidence: explicit
+    state_changes:
+      - entity: wedding_robe
+        from: unassigned
+        to: in_production
+        confidence: explicit
+    information_state:
+      revealed:
+        - "Tunde cannot sew the commissioned robe."
+      concealed:
+        - "The merchant guild does not know Bassey is doing the work."
+    audience_question: "Will Bassey deliver the robe on time without exposing Tunde?"
+    consequence:
+      value: "Tunde becomes fatally dependent on Bassey's secret craftsmanship."
+      confidence: explicit
+    visual_elements:
+      - value: "Tunde passing the shimmering gold silk across a wooden worktable by oil lamp"
+        confidence: explicit
+    transition:
+      from_previous: null
+      to_next: "Cut to the bright midday glare of the wedding pavilion courtyard."
+
+  - id: scene_02
+    scene_id: cuff_exposure
+    stage: confrontation
+    purpose: trigger_reversal
+    location:
+      entity: wedding_pavilion
+      name: "Wedding Feast Courtyard"
+      confidence: explicit
+    time:
+      timeline: afternoon
+      period: "Wedding day"
+      day_phase: day
+      confidence: explicit
+    entities:
+      - id: patriarch
+        role: antagonist
+        action: "turns the sleeve cuff inside out"
+        confidence: explicit
+      - id: tunde
+        role: protagonist
+        action: "stands frozen in cold shock with mouth open"
+        confidence: explicit
+      - id: bassey
+        role: observer
+        action: "places empty palm wine cup on stone balustrade"
+        confidence: explicit
+    objects:
+      - id: wedding_robe
+        role: prop
+        action: "cuff inverted to reveal indigo braided chain-stitch"
+        confidence: explicit
+    event:
+      value: "The patriarch publicly turns the sleeve cuff inside out and reveals Bassey's dyed indigo signature stitch."
+      confidence: explicit
+    trigger:
+      value: "The patriarch questions Tunde's fraudulent claims of secret glue techniques."
+      confidence: explicit
+    motivation:
+      value: "Demand for undisputed master craftsmanship."
+      confidence: explicit
+    state_changes:
+      - entity: tunde
+        from: celebrated_master
+        to: exposed_fraud
+        confidence: explicit
+    information_state:
+      revealed:
+        - "Bassey's indigo chain-stitch proves he made the robe."
+      concealed: []
+    audience_question: "Will the guild strip Tunde of his shop?"
+    consequence:
+      value: "Tunde's reputation collapses; the town shifts orders directly to Bassey."
+      confidence: explicit
+    visual_elements:
+      - value: "The dyed indigo braided chain-stitch exposed inside the gold brocade cuff fold"
+        confidence: explicit
+    transition:
+      from_previous: "Sharp contrast from intimate night shadows to harsh noon daylight."
+      to_next: null

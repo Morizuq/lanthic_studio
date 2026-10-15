@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProviderRequest",
+  "type": "object",
+  "properties": {
+    "provider_request": { "type": "object" },
+    "provider": {},
+    "source_artifact": { "type": "object" },
+    "global_parameters": { "type": "object" },
+    "requests": { "type": "array" },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "request_payload": { "type": "object" },
+          "capability_mapping": { "type": "array" },
+          "validations": { "type": "array" }
+        }
+      }
+    }
+  }
+}

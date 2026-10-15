@@ -1,0 +1,110 @@
+continuity:
+  story:
+    title: "The Signature in the Lining"
+    source_artifacts:
+      canonical_story: "canonical_story.md"
+      scenes: "scenes.yaml"
+
+  entities:
+    - id: tunde
+      type: character
+      identity:
+        occupation:
+          value: "tailor"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+        height:
+          value: null
+          confidence: unspecified
+          source: "the-blind-stitch.md"
+        skin_tone:
+          value: null
+          confidence: unspecified
+          source: "the-blind-stitch.md"
+      states:
+        - timeline: present
+          financial_status:
+            value: "not super successful, just okay"
+            confidence: explicit
+            source: "the-blind-stitch.md"
+          role:
+            value: "independent shop owner"
+            confidence: explicit
+            source: "the-blind-stitch.md"
+      scene_overrides:
+        night_outsourcing:
+          emotional_state:
+            value: "desperate / anxious"
+            reason: "Cannot replicate the blind stitch alone."
+        cuff_exposure:
+          emotional_state:
+            value: "nervous / frozen in shock"
+            reason: "Publicly questioned about garment construction."
+
+    - id: bassey
+      type: character
+      identity:
+        occupation:
+          value: "master tailor"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+        skills:
+          value: "master-level blind stitch, high-society finish"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+        personality:
+          value: "quiet man who speaks only when discussing measurements"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+      states:
+        - timeline: present
+          workload:
+            value: "steady, busy but local"
+            confidence: explicit
+            source: "the-blind-stitch.md"
+      scene_overrides:
+        cuff_exposure:
+          action:
+            value: "holding a cup of palm wine and watching in silence"
+            reason: "Observing the outcome of the robe."
+
+    - id: wedding_robe
+      type: object
+      identity:
+        material:
+          value: "gold-threaded silk"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+        purpose:
+          value: "ceremonial wedding robe"
+          confidence: explicit
+          source: "the-blind-stitch.md"
+      states:
+        - timeline: completed
+          condition:
+            value: "robe with seamless blind-stitched hem and lining"
+            confidence: explicit
+            source: "the-blind-stitch.md"
+      scene_overrides:
+        cuff_exposure:
+          modification:
+            value: "cuff turned inside out, exposing blind stitch"
+            reason: "Inspected by the patriarch."
+
+  constraints:
+    - entity: tunde
+      attribute: occupation
+      rule: "Must remain an independent tailor until the story resolution."
+      confidence: explicit
+    - entity: wedding_robe
+      attribute: construction
+      rule: "Must not have visible outer seams; the hand-sewn blind stitch becomes visible when the cuff is turned inside out."
+      confidence: explicit
+
+  validations:
+    - scene_id: night_outsourcing
+      status: valid
+      reason: "Entity states correctly mapped."
+    - scene_id: cuff_exposure
+      status: valid
+      reason: "Scene override aligns with canonical climax."

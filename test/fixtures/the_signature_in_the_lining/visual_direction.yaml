@@ -1,0 +1,93 @@
+visual_direction:
+  story:
+    title: "The Signature in the Lining"
+    source_artifacts:
+      canonical_story: "canonical_story.md"
+      scenes: "scenes.yaml"
+      continuity: "continuity.yaml"
+
+  global_visual_context:
+    setting: "West African provincial trade town"
+    era: "Timeless historical / early mercantile"
+    cultural_context: "Yoruba textile traditions, celebratory wedding assembly"
+    architectural_context: "Open-air pavilion courtyard with carved wooden pillars and stone balustrade"
+    technology_level: "Handcraft pre-industrial (manual shears, needlework, palm wine vessels)"
+
+  scenes:
+    - scene_id: night_outsourcing
+      narrative_anchor:
+        value: "Tunde visits Bassey's dimly lit workshop at night, pleading for help with the blind stitch."
+        confidence: explicit
+      primary_focus:
+        entity: tunde
+        reason: "Tunde's inner conflict and desperation drive the exchange."
+        confidence: explicit
+      composition:
+        framing:
+          value: medium_shot
+          confidence: designed
+        camera_angle:
+          value: eye_level
+          confidence: designed
+        subject_placement:
+          value: "Tunde leans across the wooden workbench; Bassey sits measured and calm in lantern light."
+          confidence: designed
+      environment:
+        required_elements:
+          - value: "Modest wooden tailor workshop with hanging shears and thread spools"
+            confidence: explicit
+      lighting:
+        source:
+          value: "Single kerosene lantern on workbench"
+          confidence: explicit
+        quality:
+          value: warm_low_key
+          confidence: designed
+      atmosphere:
+        mood:
+          value: "Secretive urgency and quiet tension"
+          confidence: explicit
+
+    - scene_id: cuff_exposure
+      narrative_anchor:
+        value: "The patriarch turns the groom's sleeve cuff inside out, revealing Bassey's signature indigo chain-stitch."
+        confidence: explicit
+      primary_focus:
+        entity: wedding_robe
+        reason: "The inverted cuff containing proof of authorship is the dramatic center."
+        confidence: explicit
+      composition:
+        framing:
+          value: medium_close_up
+          confidence: designed
+        camera_angle:
+          value: eye_level
+          confidence: designed
+        subject_placement:
+          value: "Patriarch's hands and inverted cuff center-left; Tunde frozen mid-ground right; Bassey in soft background"
+          confidence: designed
+      environment:
+        required_elements:
+          - value: "Wedding pavilion courtyard with stone balustrade"
+            confidence: explicit
+          - value: "Crowd of aristocratic guests and cloth merchants"
+            confidence: explicit
+      lighting:
+        source:
+          value: "Bright direct afternoon sunlight filtering beneath pavilion roof"
+          confidence: explicit
+        quality:
+          value: direct_directional
+          confidence: designed
+      atmosphere:
+        mood:
+          value: "Sudden arrest of celebration into sharp public humiliation"
+          confidence: explicit
+
+  validations:
+    - scene_id: night_outsourcing
+      status: valid
+      reason: "Visual directives match continuity."
+    - scene_id: cuff_exposure
+      status: valid
+      reason: "All entity IDs and scene_id match upstream artifacts."

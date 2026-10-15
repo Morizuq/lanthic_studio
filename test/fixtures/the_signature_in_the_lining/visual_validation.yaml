@@ -1,0 +1,61 @@
+visual_validation:
+  story:
+    title: "The Signature in the Lining"
+    source_artifacts:
+      generation_manifest: "generation_manifest.yaml"
+      continuity: "continuity.yaml"
+      scenes: "scenes.yaml"
+      visual_direction: "visual_direction.yaml"
+
+  summary:
+    total_scenes_audited: 2
+    approved_count: 2
+    rejected_count: 0
+    warning_count: 0
+    overall_production_verdict: approved
+
+  scenes:
+    - scene_id: night_outsourcing
+      asset_path: "assets/renders/the_signature_in_the_lining/night_outsourcing_84201.png"
+      verdict: approved
+      evaluations:
+        entity_invariants:
+          status: pass
+          details: "Tunde and Bassey in character; workbench and lantern consistent with period."
+        action_legibility:
+          status: pass
+          details: "Tunde's anxious posture is clearly legible."
+        negative_constraints:
+          status: pass
+          details: "Zero electric or modern artifacts."
+        composition_and_lighting:
+          status: pass
+          details: "Medium shot with warm low-key lantern lighting."
+      remediation:
+        required: false
+        guidance: null
+        suggested_seed_action: null
+
+    - scene_id: cuff_exposure
+      asset_path: "assets/renders/the_signature_in_the_lining/cuff_exposure_84206.png"
+      verdict: approved
+      evaluations:
+        entity_invariants:
+          status: pass
+          details: "Inverted sleeve cuff clearly displays dyed indigo braided double-chain stitch on inner fold; outer gold brocade face is completely seamless."
+        action_legibility:
+          status: pass
+          details: "Patriarch holding inverted cuff is in sharp foreground focus; Tunde's frozen shock is clearly legible."
+        negative_constraints:
+          status: pass
+          details: "Zero modern machines, zero synthetic glues, zero visible exterior stitching."
+        composition_and_lighting:
+          status: pass
+          details: "Medium close-up at eye level with direct afternoon sunlight illuminating the stitch."
+        cross_scene_coherence:
+          status: pass
+          details: "Tunde's attire and Bassey's appearance match upstream scenes."
+      remediation:
+        required: false
+        guidance: null
+        suggested_seed_action: null

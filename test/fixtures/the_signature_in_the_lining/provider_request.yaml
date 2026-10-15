@@ -1,0 +1,52 @@
+provider_request:
+  provider:
+    id: "flux_api"
+    model: "flux-1.1-pro"
+    adapter_version: "0.1"
+
+  source_artifact:
+    image_prompts: "image_prompts.yaml"
+
+  global_parameters:
+    aspect_ratio: "16:9"
+    seed: 84201
+    number_of_images_per_scene: 1
+
+  scenes:
+    - scene_id: night_outsourcing
+      request_payload:
+        prompt: "A medium shot at eye level in a modest wooden tailor workshop lit by a single glowing kerosene lantern. Tunde leans nervously over a dark timber workbench, pleading with urgent gestures. Bassey sits upright on a low wooden stool, calm and measured, his hands resting by a pair of heavy iron shears and spools of thread. Warm low-key amber lighting casts long shadows across rolls of uncut cloth."
+        negative_prompt: null
+        parameters:
+          aspect_ratio: "16:9"
+          seed: 84201
+          guidance_scale: 3.5
+          output_format: "png"
+      capability_mapping:
+        - capability: "text_prompt"
+          supported: true
+          status: direct_mapping
+      validations:
+        - status: valid
+          reason: "Request payload strictly matches FLUX API schema."
+
+    - scene_id: cuff_exposure
+      request_payload:
+        prompt: "A medium close-up shot at eye level in the center of an open-air wedding pavilion courtyard. The wealthy patriarch stands in the foreground, holding the right sleeve of his son's golden brocade wedding robe and turning the cuff inside out to inspect the inner lining fold. Exposed along the inner seam is a fine, hand-sewn braided double-chain stitch in dyed indigo thread, catching the bright afternoon sunlight. Opposite him, Tunde stands frozen in total shock, his mouth open mid-sentence in mortified realization. In the soft-focus background, elderly cloth merchants lean in with knowing, dry smiles, while Bassey calmly rests an empty unpainted palm wine cup on the stone balustrade. The golden brocade robe has a completely seamless exterior face, contrasting with the dark hand-braided indigo signature exposed inside the cuff."
+        negative_prompt: null
+        parameters:
+          aspect_ratio: "16:9"
+          seed: 84206
+          guidance_scale: 3.5
+          output_format: "png"
+      capability_mapping:
+        - capability: "text_prompt"
+          supported: true
+          status: direct_mapping
+        - capability: "negative_prompt"
+          supported: false
+          status: fallback_applied
+          details: "Negative constraints reinforced within positive prompt text."
+      validations:
+        - status: valid
+          reason: "Request payload strictly matches FLUX API schema."

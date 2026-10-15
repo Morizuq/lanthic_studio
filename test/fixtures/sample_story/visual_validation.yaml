@@ -1,0 +1,12 @@
+validations:
+  - scene_id: "sc_001"
+    version: 1
+    verdict: "warn"
+    flags:
+      - "Eye implant glow is pale cyan rather than vivid blue."
+    critique: "Ocular implant glow intensity is slightly subdued against the ambient red console wash."
+  - scene_id: "sc_002"
+    version: 1
+    verdict: "pass"
+    flags: []
+    critique: "Excellent starfield contrast and accurate monolith silhouette."

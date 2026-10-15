@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImagePrompts",
+  "type": "object",
+  "properties": {
+    "image_prompts": { "type": "object" },
+    "story": { "type": "object" },
+    "prompts": { "type": "array" },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "prompt": { "type": ["string", "object"] },
+          "descriptive_prompt": { "type": "object" },
+          "negative_prompt": { "type": ["string", "null"] },
+          "negative_constraints": { "type": "array" },
+          "required_elements": { "type": "array" },
+          "continuity_constraints": { "type": "array" },
+          "lora_tags": { "type": "array" },
+          "aspect_ratio": { "type": "string" },
+          "validations": { "type": "array" }
+        }
+      }
+    }
+  }
+}

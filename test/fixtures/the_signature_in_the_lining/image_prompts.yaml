@@ -1,0 +1,67 @@
+image_prompts:
+  story:
+    title: "The Signature in the Lining"
+    source_artifacts:
+      canonical_story: "canonical_story.md"
+      scenes: "scenes.yaml"
+      continuity: "continuity.yaml"
+      visual_direction: "visual_direction.yaml"
+
+  global_prompt_context:
+    setting: "West African provincial trade town"
+    era: "Timeless historical pre-industrial mercantile"
+    cultural_context: "Yoruba textile traditions, celebratory wedding assembly"
+    technology_level: "Handcraft artisan tools, manual needlework, palm wine vessels"
+
+  scenes:
+    - scene_id: night_outsourcing
+      prompt:
+        value: "A medium shot at eye level in a modest wooden tailor workshop lit by a single glowing kerosene lantern. Tunde leans nervously over a dark timber workbench, pleading with urgent gestures. Bassey sits upright on a low wooden stool, calm and measured, his hands resting by a pair of heavy iron shears and spools of thread. Warm low-key amber lighting casts long shadows across rolls of uncut cloth."
+        source_components:
+          camera_and_framing: "Medium shot, eye level."
+          primary_subject_state: "Tunde anxious; Bassey calm."
+          scene_action: "Tunde pleads with Bassey in late-night workshop."
+          environment_and_lighting: "Timber workshop, kerosene lantern, warm low-key lighting."
+      required_elements:
+        - value: "Tunde pleading over workbench"
+        - value: "Kerosene lantern on table"
+      continuity_constraints:
+        - entity: tunde
+          attribute: emotional_state
+          rule: "Must appear visibly anxious."
+      negative_constraints:
+        - value: "electric lights, modern sewing machines, factory tools"
+          reason: "Violates historical pre-industrial handcraft setting."
+      validations:
+        - status: valid
+          reason: "Compiled successfully."
+
+    - scene_id: cuff_exposure
+      prompt:
+        value: "A medium close-up shot at eye level in the center of an open-air wedding pavilion courtyard. The wealthy patriarch stands in the foreground, holding the right sleeve of his son's golden brocade wedding robe and turning the cuff inside out to inspect the inner lining fold. Exposed along the inner seam is a fine, hand-sewn braided double-chain stitch in dyed indigo thread, catching the bright afternoon sunlight. Opposite him, Tunde stands frozen in total shock, his mouth open mid-sentence in mortified realization. In the soft-focus background, elderly cloth merchants lean in with knowing, dry smiles, while Bassey calmly rests an empty unpainted palm wine cup on the stone balustrade. The golden brocade robe has a completely seamless exterior face, contrasting with the dark hand-braided indigo signature exposed inside the cuff."
+        source_components:
+          camera_and_framing: "Medium close-up, eye level, layered foreground-background depth."
+          primary_subject_state: "Patriarch holding inverted sleeve cuff; Tunde in frozen shock; Bassey composed."
+          scene_action: "Patriarch inverts sleeve cuff, publicly exposing the hand-sewn indigo signature stitch."
+          environment_and_lighting: "Open pavilion with carved pillars and stone balustrade under direct afternoon sunlight."
+          continuity_invariants: "Robe has zero visible exterior seams; dyed indigo braided chain-stitch inside inner cuff fold only."
+      required_elements:
+        - value: "Patriarch inverting the sleeve cuff before the crowd"
+        - value: "Exposed hand-sewn braided double-chain stitch in dyed indigo thread"
+        - value: "Tunde frozen with mouth open in shock"
+        - value: "Bassey placing empty palm wine cup on stone balustrade"
+      continuity_constraints:
+        - entity: wedding_robe
+          attribute: exterior_construction
+          rule: "Must display zero visible stitching on the exterior brocade face."
+        - entity: wedding_robe
+          attribute: signature_mark
+          rule: "Dyed indigo braided double-chain stitch exists strictly within the inner fold of the lining."
+      negative_constraints:
+        - value: "visible exterior stitching or seam punctures on the golden brocade face"
+          reason: "Violates continuity invariant: robe exterior must be completely seamless."
+        - value: "machine stitching, factory labels, modern scissors, electric heat-presses, or synthetic glues"
+          reason: "Violates historical pre-industrial handcraft setting."
+      validations:
+        - status: valid
+          reason: "All required visual elements compiled successfully into descriptive prompt."

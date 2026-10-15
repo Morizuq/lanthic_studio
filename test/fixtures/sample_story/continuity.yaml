@@ -1,0 +1,10 @@
+characters:
+  - name: "Captain Vane"
+    appearance: "Tall, weathered cybernetic specialist with steel-grey cropped hair and silver ocular implant on right eye."
+    clothing: "High-collar dark navy flight suit with reinforced magnetic pauldrons and copper insignias."
+    distinguishing_features:
+      - "Glow-blue pupil in right eye"
+      - "Vertical scar over left eyebrow"
+world_rules:
+  - "Artificial gravity rings produce faint amber footlight reflections."
+  - "Vacuum scenes have high-contrast black shadows and starfield glints."

@@ -1,0 +1,20 @@
+scenes:
+  - scene_id: "sc_001"
+    sequence: 1
+    slug: "INT. COMMAND DECK - NIGHT"
+    title: "Anomaly Detected"
+    description: "Captain Vane stands before the holotank as red telemetry pulses across the frosted glass."
+    setting: "Hermes VII command bridge, emergency low-light mode"
+    characters:
+      - "Captain Vane"
+    dialogue:
+      - speaker: "Captain Vane"
+        text: "Confirm bearing. That signal didn't come from any charted probe."
+  - scene_id: "sc_002"
+    sequence: 2
+    slug: "EXT. HERMES VII - CONTINUOUS"
+    title: "The Signal Origin"
+    description: "The Hermes VII drifts silently alongside a shattered obsidian monolith in low orbit."
+    setting: "Geostationary orbit over Europa, harsh stellar backlighting"
+    characters: []
+    dialogue: []

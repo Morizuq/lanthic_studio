@@ -1,0 +1,13 @@
+prompts:
+  - scene_id: "sc_001"
+    prompt: "Graphic comic panel of Captain Vane, weathered cybernetic specialist with steel-grey hair, glowing blue ocular implant, in dark navy flight suit staring at a glowing red holographic console. Low-angle Dutch tilt, heavy ink contours, chiaroscuro shadow."
+    negative_prompt: "blurry, low quality, 3d render, photorealistic, deformed hands"
+    lora_tags:
+      - "<lora:comic_ink_style:0.8>"
+    aspect_ratio: "16:9"
+  - scene_id: "sc_002"
+    prompt: "Wide splash comic panel showing spaceship Hermes VII drifting near an ancient cracked black monolith above the icy crust of Europa. Harsh sun starburst, dark starry void, bold comic hatching."
+    negative_prompt: "blurry, low resolution, saturated cartoon, washed out"
+    lora_tags:
+      - "<lora:comic_ink_style:0.8>"
+    aspect_ratio: "16:9"

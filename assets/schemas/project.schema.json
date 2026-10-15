@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectManifest",
+  "type": "object",
+  "required": ["schema_version", "story_id", "run_id", "provider"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of the project schema"
+    },
+    "story_id": {
+      "type": "string",
+      "description": "Unique identifier of the story"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier of the generation run"
+    },
+    "provider": {
+      "type": "string",
+      "enum": ["flux", "imagen", "sdxl", "custom"],
+      "description": "Primary image generation provider"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title for the story"
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

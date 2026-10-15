@@ -1,0 +1,21 @@
+schema_version: "1.0.0"
+pages:
+  - page: 1
+    template: "grid_2x1"
+    panels:
+      - slot: 0
+        scene_id: "sc_001"
+        asset: "assets/sc_001/v1.png"
+        crop:
+          x: 0.0
+          y: 0.0
+          w: 1.0
+          h: 0.5
+      - slot: 1
+        scene_id: "sc_002"
+        asset: "assets/sc_002/v1.png"
+        crop:
+          x: 0.0
+          y: 0.5
+          w: 1.0
+          h: 0.5

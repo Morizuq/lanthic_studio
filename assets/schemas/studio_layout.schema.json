@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StudioLayout",
+  "type": "object",
+  "required": ["schema_version", "pages"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["page", "template", "panels"],
+        "properties": {
+          "page": { "type": "integer" },
+          "template": {
+            "type": "string",
+            "enum": ["splash", "grid_1x2", "grid_2x1", "grid_2x2", "grid_3_horizontal", "custom"]
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["slot", "scene_id", "asset"],
+              "properties": {
+                "slot": { "type": "integer" },
+                "scene_id": { "type": "string" },
+                "asset": { "type": "string" },
+                "crop": {
+                  "type": "object",
+                  "required": ["x", "y", "w", "h"],
+                  "properties": {
+                    "x": { "type": "number" },
+                    "y": { "type": "number" },
+                    "w": { "type": "number" },
+                    "h": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

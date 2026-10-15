@@ -1,0 +1,13 @@
+schema_version: "1.0.0"
+bubbles:
+  - bubble_id: "bub_001"
+    scene_id: "sc_001"
+    type: "speech"
+    speaker: "Captain Vane"
+    text: "Confirm bearing. That signal didn't come from any charted probe."
+    x: 0.15
+    y: 0.15
+    width: 0.35
+    height: 0.2
+    tail_target_x: 0.45
+    tail_target_y: 0.55

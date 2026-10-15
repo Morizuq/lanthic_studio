@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scenes",
+  "type": "object",
+  "required": ["scenes"],
+  "properties": {
+    "mode": { "type": "string" },
+    "story": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "source": { "type": "string" },
+        "scene_count": { "type": "integer" }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id"],
+        "properties": {
+          "id": {},
+          "scene_id": { "type": "string" },
+          "sequence": { "type": "integer" },
+          "stage": { "type": ["string", "null"] },
+          "purpose": { "type": ["string", "null"] },
+          "slug": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "setting": { "type": "string" },
+          "location": { "type": "object" },
+          "time": { "type": "object" },
+          "entities": { "type": "array" },
+          "objects": { "type": "array" },
+          "event": {},
+          "trigger": {},
+          "motivation": {},
+          "state_changes": { "type": "array" },
+          "information_state": { "type": "object" },
+          "audience_question": { "type": ["string", "null"] },
+          "consequence": {},
+          "visual_elements": { "type": "array" },
+          "transition": { "type": "object" },
+          "characters": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "dialogue": {
+            "type": "array"
+          }
+        }
+      }
+    }
+  }
+}

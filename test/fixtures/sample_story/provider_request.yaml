@@ -1,0 +1,19 @@
+requests:
+  - scene_id: "sc_001"
+    provider: "flux"
+    endpoint: "https://api.bfl.ml/v1/flux-pro-1.1"
+    parameters:
+      prompt: "Graphic comic panel of Captain Vane, weathered cybernetic specialist with steel-grey hair, glowing blue ocular implant, in dark navy flight suit staring at a glowing red holographic console. Low-angle Dutch tilt, heavy ink contours, chiaroscuro shadow. <lora:comic_ink_style:0.8>"
+      aspect_ratio: "16:9"
+      steps: 30
+      guidance: 3.5
+      output_format: "png"
+  - scene_id: "sc_002"
+    provider: "flux"
+    endpoint: "https://api.bfl.ml/v1/flux-pro-1.1"
+    parameters:
+      prompt: "Wide splash comic panel showing spaceship Hermes VII drifting near an ancient cracked black monolith above the icy crust of Europa. Harsh sun starburst, dark starry void, bold comic hatching. <lora:comic_ink_style:0.8>"
+      aspect_ratio: "16:9"
+      steps: 30
+      guidance: 3.5
+      output_format: "png"

@@ -1,0 +1,15 @@
+records:
+  - scene_id: "sc_001"
+    version: 1
+    file_path: "assets/sc_001/v1.png"
+    prompt_hash: "a9f8b472e39c1"
+    provider: "flux"
+    timestamp: "2026-10-14T09:15:00Z"
+    cost_usd: 0.055
+  - scene_id: "sc_002"
+    version: 1
+    file_path: "assets/sc_002/v1.png"
+    prompt_hash: "3b29c18f7a6e0"
+    provider: "flux"
+    timestamp: "2026-10-14T09:16:30Z"
+    cost_usd: 0.055

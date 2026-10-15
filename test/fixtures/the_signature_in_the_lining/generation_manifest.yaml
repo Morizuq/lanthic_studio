@@ -1,0 +1,59 @@
+generation_manifest:
+  story:
+    title: "The Signature in the Lining"
+    source_artifacts:
+      provider_request: "provider_request.yaml"
+      image_prompts: "image_prompts.yaml"
+
+  execution_metadata:
+    provider: "flux_api"
+    model: "flux-1.1-pro"
+    executed_at: "2026-08-22T06:45:00Z"
+    total_scenes: 2
+    successful_renders: 2
+    failed_renders: 0
+    total_duration_ms: 7120
+
+  scenes:
+    - scene_id: night_outsourcing
+      status: success
+      asset:
+        file_path: "assets/renders/the_signature_in_the_lining/night_outsourcing_84201.png"
+        file_format: "png"
+        dimensions:
+          width: 1344
+          height: 768
+        file_size_bytes: 2105430
+      render_details:
+        seed: 84201
+        guidance_scale: 3.5
+        duration_ms: 3700
+        provider_job_id: "req_flux_8829101"
+      error: null
+
+    - scene_id: cuff_exposure
+      status: success
+      asset:
+        file_path: "assets/renders/the_signature_in_the_lining/cuff_exposure_84206.png"
+        file_format: "png"
+        dimensions:
+          width: 1344
+          height: 768
+        file_size_bytes: 2489120
+      render_details:
+        seed: 84206
+        guidance_scale: 3.5
+        duration_ms: 3420
+        provider_job_id: "req_flux_8829104"
+      error: null
+    - scene_id: night_outsourcing
+      status: success
+      version: 2
+      file_path: assets/night_outsourcing/v1.png
+      asset:
+        file_path: assets/night_outsourcing/v1.png
+        file_format: png
+      prompt_hash: b6a85caf91268
+      provider: qwen
+      timestamp: 2026-10-15T18:41:26.904705Z
+      cost_usd: 0.0

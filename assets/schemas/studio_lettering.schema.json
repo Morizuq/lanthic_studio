@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StudioLettering",
+  "type": "object",
+  "required": ["schema_version", "bubbles"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "bubbles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bubble_id", "scene_id", "type", "text", "x", "y"],
+        "properties": {
+          "bubble_id": { "type": "string" },
+          "scene_id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["speech", "thought", "caption"]
+          },
+          "speaker": { "type": "string" },
+          "text": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" },
+          "tail_target_x": { "type": "number" },
+          "tail_target_y": { "type": "number" }
+        }
+      }
+    }
+  }
+}

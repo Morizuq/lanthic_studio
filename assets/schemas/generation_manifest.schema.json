@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GenerationManifest",
+  "type": "object",
+  "properties": {
+    "generation_manifest": { "type": "object" },
+    "story": { "type": "object" },
+    "execution_metadata": { "type": "object" },
+    "records": { "type": "array" },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "status": { "type": "string" },
+          "asset": {
+            "type": "object",
+            "properties": {
+              "file_path": { "type": "string" },
+              "file_format": { "type": "string" },
+              "dimensions": { "type": "object" },
+              "file_size_bytes": { "type": "integer" }
+            }
+          },
+          "render_details": { "type": "object" },
+          "error": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

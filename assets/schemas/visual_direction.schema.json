@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisualDirection",
+  "type": "object",
+  "properties": {
+    "visual_direction": { "type": "object" },
+    "story": { "type": "object" },
+    "global_visual_context": { "type": "object" },
+    "global_direction": { "type": "object" },
+    "style": { "type": "string" },
+    "color_palette": {},
+    "lighting": {},
+    "camera_composition": {},
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id"]
+      }
+    },
+    "scene_overrides": { "type": "object" },
+    "validations": { "type": "array" }
+  }
+}

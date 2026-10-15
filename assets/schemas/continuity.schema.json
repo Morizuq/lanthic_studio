@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Continuity",
+  "type": "object",
+  "properties": {
+    "continuity": { "type": "object" },
+    "story": { "type": "object" },
+    "entities": {
+      "type": "object",
+      "properties": {
+        "characters": { "type": "array" },
+        "objects": { "type": "array" },
+        "locations": { "type": "array" }
+      }
+    },
+    "characters": { "type": "array" },
+    "world_rules": { "type": "array" },
+    "constraints": { "type": "array" },
+    "validations": { "type": "array" }
+  }
+}
