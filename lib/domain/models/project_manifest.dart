@@ -37,6 +37,24 @@ class ProjectManifest {
     );
   }
 
+  ProjectManifest copyWith({
+    String? schemaVersion,
+    String? storyId,
+    String? runId,
+    String? provider,
+    String? title,
+    Map<String, String>? files,
+  }) {
+    return ProjectManifest(
+      schemaVersion: schemaVersion ?? this.schemaVersion,
+      storyId: storyId ?? this.storyId,
+      runId: runId ?? this.runId,
+      provider: provider ?? this.provider,
+      title: title ?? this.title,
+      files: files ?? this.files,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'schema_version': schemaVersion,

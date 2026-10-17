@@ -2,6 +2,8 @@ import '../../core/errors/failures.dart';
 import '../../core/logging/studio_logger.dart';
 import '../../core/storage/secure_credential_store.dart';
 import '../../domain/models/aggregated_scene.dart';
+import '../../domain/models/studio_models.dart';
+import '../../domain/models/synthesis_request.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../../data/providers/provider_registry.dart';
 import 'phase6_payload_builder.dart';
@@ -78,19 +80,25 @@ class RegenerationService {
     logger.info(
       'Building Phase 6 payload for scene $sceneId using $providerId',
     );
+    final synthesisRequest = SynthesisRequest.fromRawYaml(
+      sceneId: sceneId,
+      rawPromptField: promptOverride ?? scene.effectivePrompt,
+      rawAspectRatio: scene.imagePrompt?.aspectRatio,
+    );
+
     final payload = payloadBuilder.build(
       sceneId: sceneId,
-      prompt: promptOverride ?? scene.effectivePrompt,
+      prompt: synthesisRequest.cleanPrompt,
       provider: providerId,
       negativePrompt: scene.imagePrompt?.negativePrompt,
       loraTags: scene.imagePrompt?.loraTags ?? const [],
-      aspectRatio: scene.imagePrompt?.aspectRatio ?? '16:9',
+      aspectRatio: synthesisRequest.aspectRatio.label,
       visualDirection: scene.visualDirection,
     );
 
-    logger.info('Calling provider $providerId for scene $sceneId');
-    final genResult = await provider.generate(
-      prompt: payload.prompt,
+    logger.info('Calling provider $providerId for scene $sceneId via canonical SynthesisRequest');
+    final genResult = await provider.generateFromRequest(
+      request: synthesisRequest,
       apiKey: apiKey,
       extraParameters: payload.parameters,
     );
@@ -118,6 +126,34 @@ class RegenerationService {
       promptHash: genResult.promptHash,
       provider: providerId,
       costUsd: genResult.costUsd,
+    );
+
+    // Automatically update approvals so the newly generated version is actively selected
+    final existingApprovals = List<SceneApprovalItem>.from(project.approvals.approvals);
+    final approvalIdx = existingApprovals.indexWhere((a) => a.sceneId == sceneId);
+    final oldApproval = approvalIdx >= 0 ? existingApprovals[approvalIdx] : null;
+
+    final updatedApproval = SceneApprovalItem(
+      sceneId: sceneId,
+      status: oldApproval?.status ?? ApprovalStatus.pending,
+      selectedVersion: newVersion,
+      promptOverride: promptOverride ?? oldApproval?.promptOverride,
+      reviewNotes: oldApproval?.reviewNotes ?? '',
+      updatedAt: DateTime.now().toUtc().toIso8601String(),
+    );
+
+    if (approvalIdx >= 0) {
+      existingApprovals[approvalIdx] = updatedApproval;
+    } else {
+      existingApprovals.add(updatedApproval);
+    }
+
+    await projectRepository.saveApprovals(
+      project.rootPath,
+      StudioApprovalsModel(
+        schemaVersion: project.approvals.schemaVersion,
+        approvals: List.unmodifiable(existingApprovals),
+      ),
     );
 
     return RegenerationResult(

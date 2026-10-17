@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
@@ -8,6 +9,8 @@ import '../../domain/models/studio_models.dart';
 
 class StudioYamlWriter {
   const StudioYamlWriter();
+
+  static final _AsyncLock _manifestLock = _AsyncLock();
 
   Future<void> writeApprovals(String projectRoot, StudioApprovalsModel model) async {
     final studioDir = Directory(p.join(projectRoot, 'studio'));
@@ -96,99 +99,101 @@ class StudioYamlWriter {
   Future<void> appendToGenerationManifest({
     required String projectRoot,
     required AssetVersionRecord record,
-  }) async {
-    final manifestPath = p.join(projectRoot, 'generation_manifest.yaml');
-    final file = File(manifestPath);
+  }) {
+    return _manifestLock.synchronized(() async {
+      final manifestPath = p.join(projectRoot, 'generation_manifest.yaml');
+      final file = File(manifestPath);
 
-    final entry = {
-      'scene_id': record.sceneId,
-      'status': 'success',
-      'version': record.version,
-      'file_path': record.filePath,
-      'asset': {
+      final entry = {
+        'scene_id': record.sceneId,
+        'status': 'success',
+        'version': record.version,
         'file_path': record.filePath,
-        'file_format': record.filePath.endsWith('.png') ? 'png' : 'png',
-      },
-      'prompt_hash': record.promptHash,
-      'provider': record.provider,
-      'timestamp': record.timestamp,
-      'cost_usd': record.costUsd,
-    };
+        'asset': {
+          'file_path': record.filePath,
+          'file_format': record.filePath.endsWith('.png') ? 'png' : 'png',
+        },
+        'prompt_hash': record.promptHash,
+        'provider': record.provider,
+        'timestamp': record.timestamp,
+        'cost_usd': record.costUsd,
+      };
 
-    if (!await file.exists()) {
-      final buffer = StringBuffer();
-      buffer.writeln('schema_version: "1.0.0"');
-      buffer.writeln('records:');
-      buffer.writeln('  - scene_id: "${record.sceneId}"');
-      buffer.writeln('    version: ${record.version}');
-      buffer.writeln('    file_path: "${record.filePath}"');
-      buffer.writeln('    prompt_hash: "${record.promptHash}"');
-      buffer.writeln('    provider: "${record.provider}"');
-      buffer.writeln('    timestamp: "${record.timestamp}"');
-      buffer.writeln('    cost_usd: ${record.costUsd}');
-      await _atomicWriteFile(manifestPath, buffer.toString());
-      return;
-    }
-
-    final rawContent = await file.readAsString();
-    if (rawContent.trim().isEmpty) {
-      final buffer = StringBuffer();
-      buffer.writeln('schema_version: "1.0.0"');
-      buffer.writeln('records:');
-      buffer.writeln('  - scene_id: "${record.sceneId}"');
-      buffer.writeln('    version: ${record.version}');
-      buffer.writeln('    file_path: "${record.filePath}"');
-      buffer.writeln('    prompt_hash: "${record.promptHash}"');
-      buffer.writeln('    provider: "${record.provider}"');
-      buffer.writeln('    timestamp: "${record.timestamp}"');
-      buffer.writeln('    cost_usd: ${record.costUsd}');
-      await _atomicWriteFile(manifestPath, buffer.toString());
-      return;
-    }
-
-    dynamic yamlNode;
-    try {
-      yamlNode = loadYaml(rawContent);
-    } catch (_) {
-      yamlNode = null;
-    }
-
-    final editor = YamlEditor(rawContent);
-
-    if (yamlNode is YamlMap) {
-      if (yamlNode.containsKey('generation_manifest') &&
-          yamlNode['generation_manifest'] is YamlMap) {
-        final inner = yamlNode['generation_manifest'] as YamlMap;
-        if (inner.containsKey('scenes') && inner['scenes'] is YamlList) {
-          editor.appendToList(['generation_manifest', 'scenes'], entry);
-        } else if (inner.containsKey('records') && inner['records'] is YamlList) {
-          editor.appendToList(['generation_manifest', 'records'], entry);
-        } else {
-          editor.update(['generation_manifest', 'scenes'], [entry]);
-        }
-      } else if (yamlNode.containsKey('scenes') && yamlNode['scenes'] is YamlList) {
-        editor.appendToList(['scenes'], entry);
-      } else if (yamlNode.containsKey('records') && yamlNode['records'] is YamlList) {
-        editor.appendToList(['records'], entry);
-      } else {
-        editor.update(['records'], [entry]);
+      if (!await file.exists()) {
+        final buffer = StringBuffer();
+        buffer.writeln('schema_version: "1.0.0"');
+        buffer.writeln('records:');
+        buffer.writeln('  - scene_id: "${record.sceneId}"');
+        buffer.writeln('    version: ${record.version}');
+        buffer.writeln('    file_path: "${record.filePath}"');
+        buffer.writeln('    prompt_hash: "${record.promptHash}"');
+        buffer.writeln('    provider: "${record.provider}"');
+        buffer.writeln('    timestamp: "${record.timestamp}"');
+        buffer.writeln('    cost_usd: ${record.costUsd}');
+        await _atomicWriteFile(manifestPath, buffer.toString());
+        return;
       }
-    } else {
-      final buffer = StringBuffer();
-      buffer.writeln('schema_version: "1.0.0"');
-      buffer.writeln('records:');
-      buffer.writeln('  - scene_id: "${record.sceneId}"');
-      buffer.writeln('    version: ${record.version}');
-      buffer.writeln('    file_path: "${record.filePath}"');
-      buffer.writeln('    prompt_hash: "${record.promptHash}"');
-      buffer.writeln('    provider: "${record.provider}"');
-      buffer.writeln('    timestamp: "${record.timestamp}"');
-      buffer.writeln('    cost_usd: ${record.costUsd}');
-      await _atomicWriteFile(manifestPath, buffer.toString());
-      return;
-    }
 
-    await _atomicWriteFile(manifestPath, editor.toString());
+      final rawContent = await file.readAsString();
+      if (rawContent.trim().isEmpty) {
+        final buffer = StringBuffer();
+        buffer.writeln('schema_version: "1.0.0"');
+        buffer.writeln('records:');
+        buffer.writeln('  - scene_id: "${record.sceneId}"');
+        buffer.writeln('    version: ${record.version}');
+        buffer.writeln('    file_path: "${record.filePath}"');
+        buffer.writeln('    prompt_hash: "${record.promptHash}"');
+        buffer.writeln('    provider: "${record.provider}"');
+        buffer.writeln('    timestamp: "${record.timestamp}"');
+        buffer.writeln('    cost_usd: ${record.costUsd}');
+        await _atomicWriteFile(manifestPath, buffer.toString());
+        return;
+      }
+
+      dynamic yamlNode;
+      try {
+        yamlNode = loadYaml(rawContent);
+      } catch (_) {
+        yamlNode = null;
+      }
+
+      final editor = YamlEditor(rawContent);
+
+      if (yamlNode is YamlMap) {
+        if (yamlNode.containsKey('generation_manifest') &&
+            yamlNode['generation_manifest'] is YamlMap) {
+          final inner = yamlNode['generation_manifest'] as YamlMap;
+          if (inner.containsKey('scenes') && inner['scenes'] is YamlList) {
+            editor.appendToList(['generation_manifest', 'scenes'], entry);
+          } else if (inner.containsKey('records') && inner['records'] is YamlList) {
+            editor.appendToList(['generation_manifest', 'records'], entry);
+          } else {
+            editor.update(['generation_manifest', 'scenes'], [entry]);
+          }
+        } else if (yamlNode.containsKey('scenes') && yamlNode['scenes'] is YamlList) {
+          editor.appendToList(['scenes'], entry);
+        } else if (yamlNode.containsKey('records') && yamlNode['records'] is YamlList) {
+          editor.appendToList(['records'], entry);
+        } else {
+          editor.update(['records'], [entry]);
+        }
+      } else {
+        final buffer = StringBuffer();
+        buffer.writeln('schema_version: "1.0.0"');
+        buffer.writeln('records:');
+        buffer.writeln('  - scene_id: "${record.sceneId}"');
+        buffer.writeln('    version: ${record.version}');
+        buffer.writeln('    file_path: "${record.filePath}"');
+        buffer.writeln('    prompt_hash: "${record.promptHash}"');
+        buffer.writeln('    provider: "${record.provider}"');
+        buffer.writeln('    timestamp: "${record.timestamp}"');
+        buffer.writeln('    cost_usd: ${record.costUsd}');
+        await _atomicWriteFile(manifestPath, buffer.toString());
+        return;
+      }
+
+      await _atomicWriteFile(manifestPath, editor.toString());
+    });
   }
 
   Future<void> _atomicWriteFile(String filePath, String content) async {
@@ -204,5 +209,26 @@ class StudioYamlWriter {
         cause: stack,
       );
     }
+  }
+}
+
+/// FIFO mutex guaranteeing a single-writer execution queue without external packages.
+class _AsyncLock {
+  Future<void>? _last;
+
+  Future<T> synchronized<T>(Future<T> Function() action) {
+    final prev = _last;
+    final completer = Completer<void>();
+    _last = completer.future;
+
+    return Future<void>(() async {
+      if (prev != null) {
+        try {
+          await prev;
+        } catch (_) {}
+      }
+    }).then((_) => action()).whenComplete(() {
+      completer.complete();
+    });
   }
 }

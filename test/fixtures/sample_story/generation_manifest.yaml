@@ -13,3 +13,25 @@ records:
     provider: "flux"
     timestamp: "2026-10-14T09:16:30Z"
     cost_usd: 0.055
+  - scene_id: sc_001
+    status: success
+    version: 2
+    file_path: assets/sc_001/v2.png
+    asset:
+      file_path: assets/sc_001/v2.png
+      file_format: png
+    prompt_hash: 20615f492fcf7
+    provider: qwen
+    timestamp: 2026-10-16T14:08:11.324225Z
+    cost_usd: 0.0
+  - scene_id: sc_002
+    status: success
+    version: 2
+    file_path: assets/sc_002/v2.png
+    asset:
+      file_path: assets/sc_002/v2.png
+      file_format: png
+    prompt_hash: a363916c5cb3d
+    provider: qwen
+    timestamp: 2026-10-17T07:24:04.084414Z
+    cost_usd: 0.0

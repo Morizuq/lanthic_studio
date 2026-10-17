@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import '../../../domain/models/aggregated_scene.dart';
 import '../../../domain/repositories/image_provider_contract.dart';
 import '../../project/providers/project_providers.dart';
@@ -25,6 +26,8 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
   final List<StudioGraphCable> _cables = [];
   String? _selectedNodeId;
   bool _isProcessing = false;
+  bool _isCookingAll = false;
+  String? _cookingNodeId;
 
   @override
   void initState() {
@@ -44,8 +47,10 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
     _nodes.clear();
     _cables.clear();
 
-    final scenes = widget.project.scenes;
-    final characters = widget.project.continuity.characters;
+    final project =
+        ref.read(projectStateNotifierProvider).value ?? widget.project;
+    final scenes = project.scenes;
+    final characters = project.continuity.characters;
     final currentDefaultModel = ref.read(activeImageProviderIdProvider);
 
     // 1. Root Narrative / Story Node
@@ -53,11 +58,11 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
     _nodes[storyNodeId] = StudioGraphNode(
       id: storyNodeId,
       title: 'Story Narrative Root',
-      subtitle: widget.project.manifest.title,
+      subtitle: project.manifest.title,
       nodeType: GraphNodeType.story,
       position: const Offset(60, 80),
-      promptText: widget.project.canonicalStory.isNotEmpty
-          ? widget.project.canonicalStory
+      promptText: project.canonicalStory.isNotEmpty
+          ? project.canonicalStory
           : 'Canonical story script and world constraints',
     );
 
@@ -142,6 +147,11 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
 
       // Generator Node (defaults to active provider e.g. Qwen)
       final assetRecord = scene.currentAssetRecord;
+      final fullAssetPath = assetRecord != null
+          ? (p.isAbsolute(assetRecord.filePath)
+                ? assetRecord.filePath
+                : p.join(project.rootPath, assetRecord.filePath))
+          : null;
 
       _nodes[genId] = StudioGraphNode(
         id: genId,
@@ -149,7 +159,7 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
         subtitle: 'Frame Synthesis',
         nodeType: GraphNodeType.generator,
         position: Offset(780, yPos),
-        imagePath: assetRecord?.filePath,
+        imagePath: fullAssetPath,
         modelProvider: currentDefaultModel,
         status: scene.status.name,
         sceneId: scene.sceneId,
@@ -170,29 +180,33 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
     }
   }
 
-  String? _cookingNodeId;
-
   Future<void> _handleCookNode(StudioGraphNode node) async {
     if (node.sceneId == null || _isProcessing) return;
     ref.read(selectedSceneIdProvider.notifier).select(node.sceneId!);
     setState(() {
       _isProcessing = true;
       _cookingNodeId = node.id;
+      _isCookingAll = false;
     });
     try {
       final regenService = ref.read(regenerationServiceProvider);
+      final currentProject =
+          ref.read(projectStateNotifierProvider).value ?? widget.project;
       final promptText =
           (node.promptText != null && node.promptText!.trim().isNotEmpty)
           ? node.promptText
-          : widget.project.sceneById(node.sceneId!)?.effectivePrompt;
+          : currentProject.sceneById(node.sceneId!)?.effectivePrompt;
       await regenService.regenerateScene(
-        project: widget.project,
+        project: currentProject,
         sceneId: node.sceneId!,
         promptOverride: promptText,
         providerOverride: node.modelProvider,
       );
       await ref.read(projectStateNotifierProvider.notifier).refreshProject();
       if (mounted) {
+        setState(() {
+          _buildGraphFromProject();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -256,19 +270,32 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
 
   Future<void> _handleCookAll() async {
     if (_isProcessing) return;
-    setState(() => _isProcessing = true);
+    setState(() {
+      _isProcessing = true;
+      _isCookingAll = true;
+    });
     final regenService = ref.read(regenerationServiceProvider);
     final activeModel = ref.read(activeImageProviderIdProvider);
+    final currentProject =
+        ref.read(projectStateNotifierProvider).value ?? widget.project;
     try {
-      for (final scene in widget.project.scenes) {
+      for (final scene in currentProject.scenes) {
+        if (mounted) {
+          setState(() {
+            _cookingNodeId = 'node_gen_${scene.sceneId}';
+          });
+        }
         await regenService.regenerateScene(
-          project: widget.project,
+          project: currentProject,
           sceneId: scene.sceneId,
           providerOverride: activeModel,
         );
       }
       await ref.read(projectStateNotifierProvider.notifier).refreshProject();
       if (mounted) {
+        setState(() {
+          _buildGraphFromProject();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -320,7 +347,13 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _cookingNodeId = null;
+          _isCookingAll = false;
+        });
+      }
     }
   }
 
@@ -383,11 +416,10 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
                             node.modelProvider = newModel;
                           });
                         },
-                        onGeneratePressed: () => _handleCookNode(node),
-                        isCooking:
-                            _cookingNodeId == node.id ||
-                            (_isProcessing &&
-                                node.nodeType == GraphNodeType.generator),
+                        onGeneratePressed: _isProcessing
+                            ? null
+                            : () => _handleCookNode(node),
+                        isCooking: _cookingNodeId == node.id,
                       ),
                   ],
                 ),
@@ -461,7 +493,7 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              icon: _isProcessing
+              icon: _isCookingAll
                   ? const SizedBox(
                       width: 14,
                       height: 14,
@@ -471,9 +503,12 @@ class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
                       ),
                     )
                   : const Icon(Icons.auto_awesome, size: 15),
-              label: const Text(
-                'Cook Graph',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              label: Text(
+                _isCookingAll ? 'Cooking Graph...' : 'Cook Graph',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               onPressed: _isProcessing ? null : _handleCookAll,
             ),

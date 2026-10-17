@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:synchronized/synchronized.dart';
 import '../../core/analytics/analytics_service.dart';
 import '../../core/errors/failures.dart';
 import '../../core/logging/studio_logger.dart';
-import '../../core/network/app_failure.dart';
 import '../../core/network/network_constants.dart';
 import '../../domain/models/image_prompt_model.dart';
+import '../../domain/models/synthesis_request.dart';
 import '../../domain/repositories/image_provider_contract.dart';
 
 class QwenImageProvider implements ImageProviderContract {
@@ -15,6 +16,14 @@ class QwenImageProvider implements ImageProviderContract {
 
   final Dio _dio;
   final AnalyticsService? analytics;
+
+  static final Lock _pollinationsLock = Lock();
+  static bool _hfCreditsDepleted = false;
+
+  /// Resets the HF credits circuit-breaker (e.g. when user updates HF token in settings).
+  static void resetHfCreditsCircuitBreaker() {
+    _hfCreditsDepleted = false;
+  }
 
   @override
   String get providerIdentifier => 'qwen';
@@ -37,6 +46,27 @@ class QwenImageProvider implements ImageProviderContract {
     'https://router.huggingface.co/wavespeed/models/wavespeed-ai/flux-schnell',
     'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-3-medium-diffusers',
   ];
+
+  @override
+  Future<ImageGenerationResult> generateFromRequest({
+    required SynthesisRequest request,
+    required String apiKey,
+    Map<String, dynamic> extraParameters = const {},
+  }) {
+    final dims = request.aspectRatio.toDimensions(ModelArch.flux);
+    return generate(
+      prompt: request.cleanPrompt,
+      apiKey: apiKey,
+      extraParameters: {
+        'scene_id': request.sceneId,
+        'width': dims.width,
+        'height': dims.height,
+        'seed': request.seed,
+        'aspect_ratio': request.aspectRatio.label,
+        ...extraParameters,
+      },
+    );
+  }
 
   @override
   Future<ImageGenerationResult> generate({
@@ -104,9 +134,8 @@ class QwenImageProvider implements ImageProviderContract {
       validParameters['num_inference_steps'] = extraParameters['steps'];
     }
 
-    final payload = {
+    final hfPayload = <String, dynamic>{
       'inputs': cleanPrompt,
-      if (validParameters.isNotEmpty) 'parameters': validParameters,
     };
 
     final endpointsToTry = customEndpoint != null && customEndpoint.isNotEmpty
@@ -121,11 +150,14 @@ class QwenImageProvider implements ImageProviderContract {
     );
 
     Response<dynamic>? successfulResponse;
-    DioException? primaryDioException;
-    DioException? lastDioException;
 
-    // Try Hugging Face router candidates first if an API key is available
-    if (apiKey.trim().isNotEmpty || isLocalEndpoint) {
+    // Try Hugging Face router candidates first if an API key is available and circuit-breaker is not engaged
+    if (_hfCreditsDepleted) {
+      analytics?.logMessage(
+        StudioLogLevel.info,
+        '[HF Provider] HF credits circuit-breaker is active. Skipping candidate endpoints and routing directly to Pollinations...',
+      );
+    } else if (apiKey.trim().isNotEmpty || isLocalEndpoint) {
       for (final endpoint in endpointsToTry) {
         try {
           analytics?.logMessage(
@@ -135,7 +167,7 @@ class QwenImageProvider implements ImageProviderContract {
 
           final response = await _dio.post<dynamic>(
             endpoint,
-            data: payload,
+            data: hfPayload,
             options: Options(
               sendTimeout: NetworkConstants.generationTimeout,
               receiveTimeout: NetworkConstants.generationTimeout,
@@ -152,8 +184,6 @@ class QwenImageProvider implements ImageProviderContract {
           successfulResponse = response;
           break;
         } on DioException catch (e) {
-          primaryDioException ??= e;
-          lastDioException = e;
           final status = e.response?.statusCode;
           String responseBodyStr = '';
           final resData = e.response?.data;
@@ -167,106 +197,77 @@ class QwenImageProvider implements ImageProviderContract {
             responseBodyStr = resData.toString();
           }
 
-          final errMsg = responseBodyStr.isNotEmpty
-              ? responseBodyStr.toLowerCase()
-              : (e.message?.toLowerCase() ?? '');
-
-          final isModelRoutingIssue =
-              status == 410 ||
-              status == 404 ||
-              status == 400 ||
-              status == 403 ||
-              errMsg.contains('deprecated') ||
-              errMsg.contains('no longer supported') ||
-              errMsg.contains('not supported');
-
-          if (isModelRoutingIssue) {
+          // If HF returns 402 (Payment Required / No remaining credits), engage circuit-breaker
+          if (status == 402 ||
+              responseBodyStr.toLowerCase().contains('no remaining credits')) {
+            _hfCreditsDepleted = true;
             analytics?.logMessage(
               StudioLogLevel.warning,
-              '[HF Provider] Endpoint $endpoint failed with HTTP $status ($responseBodyStr). Falling over to next candidate...',
+              '[HF Provider] HF credits depleted (HTTP 402: $responseBodyStr). Engaging circuit-breaker for this session.',
             );
-            continue;
+            break;
           }
-          break;
+
+          analytics?.logMessage(
+            StudioLogLevel.warning,
+            '[HF Provider] Endpoint $endpoint failed with HTTP $status ($responseBodyStr). Falling over to next candidate...',
+          );
+          continue;
+        } catch (e) {
+          analytics?.logMessage(
+            StudioLogLevel.warning,
+            '[HF Provider] Endpoint $endpoint unexpected error: $e. Falling over to next candidate...',
+          );
+          continue;
         }
       }
     }
 
-    // Resilient fallback: If HF router fails or free token lacks paid partner quotas,
-    // synthesize via open-source FLUX pipeline with zero setup
+    // Guaranteed fallback: If all HF router endpoints fail or token lacks paid quotas,
+    // immediately synthesize via zero-auth Pollinations FLUX generator
     if (successfulResponse == null) {
       analytics?.logMessage(
-        StudioLogLevel.info,
-        '[HF Provider] Router endpoints require provider credits. Activating open-source FLUX synthesis pipeline...',
+        StudioLogLevel.warning,
+        '[WARNING] All HF endpoints failed, executing Pollinations FLUX fallback...',
       );
+
       try {
-        final encodedPrompt = Uri.encodeComponent(cleanPrompt);
-        final pollUrl =
-            'https://image.pollinations.ai/prompt/$encodedPrompt?width=$width&height=$height&model=flux&nologo=true';
-        final pollResponse = await _dio.get<dynamic>(
-          pollUrl,
-          options: Options(
-            responseType: ResponseType.bytes,
-            sendTimeout: const Duration(seconds: 45),
-            receiveTimeout: const Duration(seconds: 45),
-          ),
+        final fallbackSeed = extraParameters['seed'] is int
+            ? extraParameters['seed'] as int
+            : null;
+
+        final imageBytes = await _generateWithPollinationsFallback(
+          cleanPrompt: cleanPrompt,
+          width: width,
+          height: height,
+          seed: fallbackSeed,
         );
-        successfulResponse = pollResponse;
-      } catch (e) {
+
+        final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
         analytics?.logMessage(
-          StudioLogLevel.warning,
-          '[HF Provider] Resilient fallback failed: $e',
+          StudioLogLevel.info,
+          '[HF Provider] Successfully rendered fallback image frame (${imageBytes.lengthInBytes} bytes) in ${elapsedMs}ms for scene "${extraParameters['scene_id'] ?? 'unknown'}"',
         );
-      }
-    }
 
-    if (successfulResponse == null) {
-      final activeException = primaryDioException ?? lastDioException;
-      if (activeException != null) {
-        final appFailure = NetworkFailure.fromDioException(activeException);
-        var userMessage = appFailure.message;
-
-        final rawErrData = activeException.response?.data;
-        String decodedErrorBody = '';
-        if (rawErrData is List<int>) {
-          try {
-            decodedErrorBody = utf8.decode(rawErrData, allowMalformed: true);
-          } catch (_) {}
-        }
-        if (decodedErrorBody.isNotEmpty) {
-          userMessage = decodedErrorBody;
-        }
-
-        final lowerMessage = userMessage.toLowerCase();
-        if (lowerMessage.contains('permissions to call inference providers') ||
-            (activeException.response?.statusCode == 403 &&
-                lowerMessage.contains('permission'))) {
-          userMessage =
-              'Hugging Face token lacks Inference permissions. In huggingface.co/settings/tokens, edit your token and check "Make calls to Inference Providers".';
-        } else if (lowerMessage.contains('gated') ||
-            lowerMessage.contains('agree') ||
-            lowerMessage.contains('terms') ||
-            lowerMessage.contains('license')) {
-          userMessage =
-              'Access requires agreeing to model terms. Visit huggingface.co/black-forest-labs/FLUX.1-schnell and click "Acknowledge license".';
-        } else if (lowerMessage.contains('deprecated') ||
-            lowerMessage.contains('no longer supported') ||
-            lowerMessage.contains('not supported')) {
-          userMessage =
-              'Model endpoint temporarily unavailable across candidate Inference Providers. Check HF Inference Provider settings.';
-        }
+        return ImageGenerationResult(
+          imageBytes: imageBytes,
+          promptHash: promptHash,
+          provider: 'qwen',
+          costUsd: 0.0,
+          generationTimeMs: elapsedMs,
+        );
+      } catch (fallbackError) {
+        analytics?.logMessage(
+          StudioLogLevel.error,
+          '[HF Provider] Pollinations fallback also failed: $fallbackError',
+        );
         throw GenerationFailure(
-          'Generation failed: $userMessage',
+          'Generation failed: $fallbackError',
           sceneId: extraParameters['scene_id']?.toString() ?? 'unknown',
           provider: providerIdentifier,
-          details: appFailure.details,
+          details: fallbackError.toString(),
         );
       }
-      throw GenerationFailure(
-        'Serverless image generation failed across candidate endpoints',
-        sceneId: extraParameters['scene_id']?.toString() ?? 'unknown',
-        provider: providerIdentifier,
-      );
     }
 
     try {
@@ -324,5 +325,78 @@ class QwenImageProvider implements ImageProviderContract {
         details: e.toString(),
       );
     }
+  }
+
+  Future<Uint8List> _generateWithPollinationsFallback({
+    required String cleanPrompt,
+    int width = 1024,
+    int height = 576,
+    int? seed,
+  }) async {
+    return await _pollinationsLock.synchronized(() async {
+      final effectiveSeed =
+          seed ?? (DateTime.now().millisecondsSinceEpoch % 1000000);
+      final encodedPrompt = Uri.encodeComponent(cleanPrompt);
+      final url =
+          'https://image.pollinations.ai/prompt/$encodedPrompt?width=$width&height=$height&seed=$effectiveSeed&model=flux&nologo=true';
+
+      const int maxAttempts = 3;
+      for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          final response = await _dio.get<List<int>>(
+            url,
+            options: Options(
+              responseType: ResponseType.bytes,
+              receiveTimeout: const Duration(seconds: 90),
+              headers: {
+                'Accept': 'image/jpeg, image/png, image/*',
+              },
+            ),
+          );
+
+          if (response.statusCode == 200 &&
+              response.data != null &&
+              response.data!.isNotEmpty) {
+            return Uint8List.fromList(response.data!);
+          }
+        } on DioException catch (e) {
+          final statusCode = e.response?.statusCode;
+          // Handle Pollinations 402 FREE_LIMIT or 429 Too Many Requests
+          if ((statusCode == 402 || statusCode == 429) && attempt < maxAttempts) {
+            int waitSeconds = 15; // Safe default if regex doesn't match
+            try {
+              final rawData = e.response?.data;
+              String bodyStr = '';
+              if (rawData is List<int>) {
+                bodyStr = utf8.decode(rawData, allowMalformed: true);
+              } else if (rawData != null) {
+                bodyStr = rawData.toString();
+              }
+              final match = RegExp(r'Retry after (\d+)s', caseSensitive: false)
+                  .firstMatch(bodyStr);
+              if (match != null) {
+                waitSeconds = (int.tryParse(match.group(1)!) ?? 10) + 2;
+              } else {
+                waitSeconds = 46; // Full IP window reset
+              }
+            } catch (_) {
+              waitSeconds = 20;
+            }
+
+            // Cap wait time at 48 seconds max
+            waitSeconds = waitSeconds.clamp(2, 48);
+            final logMsg =
+                '[LanthicAnalytics] [INFO] Pollinations rate limit hit (attempt $attempt/$maxAttempts). '
+                'Waiting ${waitSeconds}s for IP cooldown before automatic retry...';
+            debugPrint(logMsg);
+            analytics?.logMessage(StudioLogLevel.warning, logMsg);
+            await Future.delayed(Duration(seconds: waitSeconds));
+            continue;
+          }
+          rethrow;
+        }
+      }
+      throw Exception('Pollinations synthesis exhausted all retry attempts.');
+    });
   }
 }

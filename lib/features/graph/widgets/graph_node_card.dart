@@ -185,7 +185,14 @@ class GraphNodeCard extends StatelessWidget {
       return ClipRRect(
         borderRadius: BorderRadius.circular(6),
         child: AssetFileHelper.isRealRenderedAsset(file)
-            ? Image.file(file, fit: BoxFit.cover, width: double.infinity)
+            ? Image.file(
+                file,
+                key: ValueKey(
+                  '${file.path}_${file.existsSync() ? file.lastModifiedSync().millisecondsSinceEpoch : 0}',
+                ),
+                fit: BoxFit.cover,
+                width: double.infinity,
+              )
             : _buildImagePlaceholder(),
       );
     }

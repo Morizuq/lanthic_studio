@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 import '../../core/errors/failures.dart';
 import '../../domain/models/aggregated_scene.dart';
 import '../../domain/models/continuity_model.dart';
@@ -52,7 +53,7 @@ class DiskProjectRepository implements ProjectRepository {
     );
     projectFlags.addAll(manifestRes.flags);
 
-    final ProjectManifest manifest;
+    ProjectManifest manifest;
     if (manifestRes.data != null) {
       manifest = ProjectManifest.fromMap(manifestRes.data!);
     } else {
@@ -62,7 +63,7 @@ class DiskProjectRepository implements ProjectRepository {
         storyId: dirName,
         runId: 'run_local',
         provider: 'flux',
-        title: dirName.replaceAll('_', ' '),
+        title: '',
       );
     }
 
@@ -87,6 +88,21 @@ class DiskProjectRepository implements ProjectRepository {
           sceneModels.add(SceneModel.fromMap(Map<String, dynamic>.from(s), idx++));
         }
       }
+    }
+
+    // Resolve project title if missing from project.yaml
+    if (manifest.title.isEmpty) {
+      final storyTitle = _extractTitleFromCanonicalStory(canonicalStory);
+      final scenesTitle = scenesRes.data?['story'] is Map
+          ? (scenesRes.data!['story']['title'] as String?)?.trim()
+          : null;
+      final dirName = p.basename(projectDirectoryPath);
+      final resolvedTitle = (storyTitle != null && storyTitle.isNotEmpty)
+          ? storyTitle
+          : ((scenesTitle != null && scenesTitle.isNotEmpty)
+              ? scenesTitle
+              : dirName.replaceAll('_', ' '));
+      manifest = manifest.copyWith(title: resolvedTitle);
     }
 
     // 4. Read continuity.yaml
@@ -239,14 +255,7 @@ class DiskProjectRepository implements ProjectRepository {
 
     final finalManifest = (manifestRes.data == null &&
             generationManifest.provider.isNotEmpty)
-        ? ProjectManifest(
-            schemaVersion: manifest.schemaVersion,
-            storyId: manifest.storyId,
-            runId: manifest.runId,
-            provider: generationManifest.provider,
-            title: manifest.title,
-            files: manifest.files,
-          )
+        ? manifest.copyWith(provider: generationManifest.provider)
         : manifest;
 
     return StoryProject(
@@ -338,5 +347,76 @@ class DiskProjectRepository implements ProjectRepository {
       projectRoot: projectDirectoryPath,
       record: record,
     );
+  }
+
+  /// Extracts the narrative story title from Phase 01 canonical story markdown.
+  ///
+  /// Supports:
+  /// 1. Embedded YAML blocks: ```yaml ... story: title: "..."
+  /// 2. Frontmatter: --- ... story: title: "..."
+  /// 3. Top-level Markdown header: # <Title> (excluding boilerplate headers)
+  String? _extractTitleFromCanonicalStory(String canonicalStory) {
+    if (canonicalStory.trim().isEmpty) return null;
+
+    // 1. Try markdown code block: ```yaml ... story: \n  title: ... ```
+    final yamlBlockMatch = RegExp(
+      r'```(?:ya?ml)?\s*\n([\s\S]*?)\n```',
+      multiLine: true,
+    ).firstMatch(canonicalStory);
+    if (yamlBlockMatch != null) {
+      final content = yamlBlockMatch.group(1);
+      if (content != null) {
+        final title = _extractTitleFromYamlString(content);
+        if (title != null && title.isNotEmpty) return title;
+      }
+    }
+
+    // 2. Try markdown frontmatter: --- ... story: \n  title: ... ---
+    final frontmatterMatch = RegExp(
+      r'^---\s*\n([\s\S]*?)\n---',
+      multiLine: true,
+    ).firstMatch(canonicalStory);
+    if (frontmatterMatch != null) {
+      final content = frontmatterMatch.group(1);
+      if (content != null) {
+        final title = _extractTitleFromYamlString(content);
+        if (title != null && title.isNotEmpty) return title;
+      }
+    }
+
+    // 3. Try top-level markdown title header: # <Title>
+    // Exclude generic scaffolding headers like "# Lanthic Analysis" or "# Phase 01: Canonical Story"
+    final headerMatches = RegExp(r'^#\s+([^\r\n]+)', multiLine: true).allMatches(canonicalStory);
+    for (final match in headerMatches) {
+      final candidate = match.group(1)?.trim();
+      if (candidate != null &&
+          candidate.isNotEmpty &&
+          !candidate.toLowerCase().startsWith('lanthic') &&
+          !candidate.toLowerCase().startsWith('phase')) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  String? _extractTitleFromYamlString(String yamlString) {
+    try {
+      final doc = loadYaml(yamlString);
+      if (doc is Map) {
+        final story = doc['story'];
+        if (story is Map && story['title'] != null) {
+          final t = story['title'].toString().trim();
+          if (t.isNotEmpty) return t;
+        }
+        if (doc['title'] != null) {
+          final t = doc['title'].toString().trim();
+          if (t.isNotEmpty) return t;
+        }
+      }
+    } catch (_) {
+      // Gracefully ignore YAML parse errors in unstructured markdown text
+    }
+    return null;
   }
 }
