@@ -2,12 +2,21 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'schema_validator.dart';
 
+/// Central catalog responsible for locating, loading, and caching JSON Schemas
+/// for all 8 narrative pipeline phases and studio configuration files.
+///
+/// Implements a multi-tiered schema discovery policy:
+/// 1. Custom schemas directory supplied by the project (e.g. `<project_root>/schemas/`).
+/// 2. Local workspace filesystem assets (`assets/schemas/`).
+/// 3. Flutter compiled bundle assets via [rootBundle].
 class SchemaRegistry {
+  /// Constructs a [SchemaRegistry] backed by the given [SchemaValidator].
   SchemaRegistry(this._validator);
 
   final SchemaValidator _validator;
   bool _initialized = false;
 
+  /// Canonical list of schema names required across the studio pipeline.
   static const List<String> schemaNames = [
     'project',
     'scenes',
@@ -22,6 +31,9 @@ class SchemaRegistry {
     'studio_lettering',
   ];
 
+  /// Asynchronously loads and compiles all JSON schemas from filesystem or bundle.
+  ///
+  /// * [customSchemasDir]: Optional project-specific override path.
   Future<void> initialize({String? customSchemasDir}) async {
     if (_initialized) return;
 
@@ -47,7 +59,7 @@ class SchemaRegistry {
         try {
           jsonContent = await rootBundle.loadString('assets/schemas/$name.schema.json');
         } catch (_) {
-          // Fallback if not found
+          // Fallback if not found in bundle
         }
       }
 
@@ -59,7 +71,9 @@ class SchemaRegistry {
     _initialized = true;
   }
 
+  /// Delegates schema validation for [schemaKey] to the underlying [SchemaValidator].
   SchemaValidationResult validate(String schemaKey, dynamic data) {
     return _validator.validate(schemaKey, data);
   }
 }
+

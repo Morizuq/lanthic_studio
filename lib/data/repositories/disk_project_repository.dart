@@ -16,7 +16,33 @@ import '../yaml/phase_yaml_reader.dart';
 import '../yaml/schema_registry.dart';
 import '../yaml/studio_yaml_writer.dart';
 
+/// Concrete filesystem-backed implementation of [ProjectRepository].
+///
+/// Orchestrates the deserialization, schema validation, and relational joining
+/// of all 8 pipeline phases and studio configuration artifacts on local disk:
+///
+/// 1. `project.yaml`: Story identity, run parameters, and provider settings.
+/// 2. `canonical_story.md`: Raw source narrative and prose foundation.
+/// 3. `scenes.yaml` / `script.yaml`: Scene sequence, sluglines, actions, and beats.
+/// 4. `continuity.yaml`: Cross-scene character traits, costumes, and timeline rules.
+/// 5. `visual_direction.yaml`: Camera focal lengths, lighting setups, color palettes.
+/// 6. `image_prompts.yaml`: Synthesizer prompts and negative prompt specifications.
+/// 7. `generation_manifest.yaml`: Visual asset versions, prompt hashes, and image paths.
+/// 8. `visual_validation.yaml`: Automated QA continuity scores and flags.
+/// 9. `studio/approvals.yaml`: Director decisions, status sign-offs, and prompt overrides.
+/// 10. `studio/layout.yaml`: Comic page panel geometries and slot assignments.
+/// 11. `studio/lettering.yaml`: Comic balloon text and visual dialogue placement.
+///
+/// ### Resilient Ingestion
+/// Rather than aborting on schema drift or missing optional files, [DiskProjectRepository]
+/// accumulates non-fatal validation issues as [SceneValidationFlag] instances and attaches
+/// them to [StoryProject.projectFlags] and individual [AggregatedScene.flags].
 class DiskProjectRepository implements ProjectRepository {
+  /// Constructs a [DiskProjectRepository].
+  ///
+  /// * [_schemaRegistry]: Registry containing compiled JSON schemas for all phases.
+  /// * [_yamlReader]: Ingestion parser handling YAML-to-Dart map normalization and validation.
+  /// * [_yamlWriter]: Atomic file writer for studio configurations and generation manifests.
   DiskProjectRepository({
     required SchemaRegistry schemaRegistry,
     PhaseYamlReader? yamlReader,

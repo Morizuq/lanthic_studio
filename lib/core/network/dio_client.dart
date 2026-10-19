@@ -7,6 +7,14 @@ import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'network_constants.dart';
 
+
+/// Riverpod dependency injection provider configuring the application-wide [Dio] HTTP client.
+///
+/// Features:
+/// - Base URL configuration derived from [configProvider].
+/// - Strict network timeouts (connect, receive, and send) via [NetworkConstants].
+/// - [AuthInterceptor] to safely attach bearer tokens to internal backends.
+/// - [NetworkLoggingInterceptor] to stream redacted HTTP telemetry to analytics.
 final dioProvider = Provider<Dio>((ref) {
   final config = ref.watch(configProvider);
   final secureStorage = ref.watch(secureStorageServiceProvider);
@@ -31,3 +39,4 @@ final dioProvider = Provider<Dio>((ref) {
 
   return dio;
 });
+

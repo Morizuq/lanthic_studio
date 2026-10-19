@@ -3,11 +3,27 @@ import 'package:path/path.dart' as p;
 import '../../domain/models/pipeline_run_progress.dart';
 import '../../domain/repositories/skills_repository.dart';
 
+/// Central application orchestrator managing the automated execution of all 8 narrative phases.
+///
+/// Coordinates execution across the skills repository:
+/// 1. Phase 1 (`canonical_story.md` / `script.yaml`): Story prose synthesis and dialogue decomposition.
+/// 2. Phase 2 (`beats.yaml` / `scenes.yaml`): Narrative tension and scene beat extraction.
+/// 3. Phase 3 (`continuity.yaml`): Character wardrobe, physical traits, and scene timeline continuity.
+/// 4. Phase 4 (`visual_direction.yaml`): Camera focal length, cinematic lighting, and color grading.
+/// 5. Phase 5 (`image_prompts.yaml`): Synthesizer prompt engineering and negative prompting.
+/// 6. Phase 6 (`generation_manifest.yaml`): Provider schema adaptation and cooking manifest creation.
+/// 7. Phase 7 (`assets/scenes/`): Image generation dispatch and asset persistence.
+/// 8. Phase 8 (`visual_validation.yaml`): Continuity validation and consistency scoring.
 class LanthicPipelineOrchestrator {
+  /// Constructs a [LanthicPipelineOrchestrator].
+  ///
+  /// * [skillsRepository]: Domain abstraction executing underlying CLI skills or local LLM logic.
   LanthicPipelineOrchestrator({required this.skillsRepository});
 
+  /// The underlying skills repository backing pipeline phase execution.
   final SkillsRepository skillsRepository;
 
+  /// Ordered human-readable names of the 8 canonical pipeline phases.
   static const List<String> phaseNames = [
     '01 Storytelling',
     '02 Scene Extraction',
@@ -19,6 +35,13 @@ class LanthicPipelineOrchestrator {
     '08 Visual Validation',
   ];
 
+  /// Asynchronously executes the end-to-end 8-phase storytelling pipeline.
+  ///
+  /// * [storyTitle]: Working title of the narrative project.
+  /// * [rawStory]: Raw source narrative prompt or initial prose input.
+  /// * [targetDirectory]: Filesystem directory where the project directory will be created.
+  /// * [provider]: Vision synthesis provider slug (e.g. `'flux'`, `'qwen'`).
+  /// * [onProgress]: Streaming progress callback reporting state, logs, and phase transitions.
   Future<void> runPipeline({
     required String storyTitle,
     required String rawStory,

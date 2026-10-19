@@ -7,12 +7,27 @@ import '../../core/errors/failures.dart';
 import '../../domain/models/generation_manifest_model.dart';
 import '../../domain/models/studio_models.dart';
 
+/// Thread-safe writer responsible for persisting studio mutations back to disk.
+///
+/// Features:
+/// 1. **Atomic File Writes**: Writes data to a temporary file (`.tmp`) with `flush: true`
+///    before atomically renaming it to the target file. This eliminates partial-write
+///    corruptions caused by abrupt app termination or power failure.
+/// 2. **Non-destructive In-Place YAML Edits**: Uses `package:yaml_edit` to append
+///    records into `generation_manifest.yaml` while preserving comments, formatting,
+///    and unrecognized custom keys.
+/// 3. **Asynchronous Lock Mutex**: Enforces sequential serialization for manifest writes
+///    via [_AsyncLock] to prevent race conditions during parallel scene cooking.
 class StudioYamlWriter {
+  /// Constructs a [StudioYamlWriter].
   const StudioYamlWriter();
 
   static final _AsyncLock _manifestLock = _AsyncLock();
 
-  Future<void> writeApprovals(String projectRoot, StudioApprovalsModel model) async {
+  Future<void> writeApprovals(
+    String projectRoot,
+    StudioApprovalsModel model,
+  ) async {
     final studioDir = Directory(p.join(projectRoot, 'studio'));
     if (!await studioDir.exists()) {
       await studioDir.create(recursive: true);
@@ -36,7 +51,10 @@ class StudioYamlWriter {
       buffer.writeln('    updated_at: "${app.updatedAt}"');
     }
 
-    await _atomicWriteFile(p.join(studioDir.path, 'approvals.yaml'), buffer.toString());
+    await _atomicWriteFile(
+      p.join(studioDir.path, 'approvals.yaml'),
+      buffer.toString(),
+    );
   }
 
   Future<void> writeLayout(String projectRoot, StudioLayoutModel model) async {
@@ -64,10 +82,16 @@ class StudioYamlWriter {
       }
     }
 
-    await _atomicWriteFile(p.join(studioDir.path, 'layout.yaml'), buffer.toString());
+    await _atomicWriteFile(
+      p.join(studioDir.path, 'layout.yaml'),
+      buffer.toString(),
+    );
   }
 
-  Future<void> writeLettering(String projectRoot, StudioLetteringModel model) async {
+  Future<void> writeLettering(
+    String projectRoot,
+    StudioLetteringModel model,
+  ) async {
     final studioDir = Directory(p.join(projectRoot, 'studio'));
     if (!await studioDir.exists()) {
       await studioDir.create(recursive: true);
@@ -92,9 +116,11 @@ class StudioYamlWriter {
       buffer.writeln('    tail_target_y: ${b.tailTargetY}');
     }
 
-    await _atomicWriteFile(p.join(studioDir.path, 'lettering.yaml'), buffer.toString());
+    await _atomicWriteFile(
+      p.join(studioDir.path, 'lettering.yaml'),
+      buffer.toString(),
+    );
   }
-
 
   Future<void> appendToGenerationManifest({
     required String projectRoot,
@@ -165,14 +191,17 @@ class StudioYamlWriter {
           final inner = yamlNode['generation_manifest'] as YamlMap;
           if (inner.containsKey('scenes') && inner['scenes'] is YamlList) {
             editor.appendToList(['generation_manifest', 'scenes'], entry);
-          } else if (inner.containsKey('records') && inner['records'] is YamlList) {
+          } else if (inner.containsKey('records') &&
+              inner['records'] is YamlList) {
             editor.appendToList(['generation_manifest', 'records'], entry);
           } else {
             editor.update(['generation_manifest', 'scenes'], [entry]);
           }
-        } else if (yamlNode.containsKey('scenes') && yamlNode['scenes'] is YamlList) {
+        } else if (yamlNode.containsKey('scenes') &&
+            yamlNode['scenes'] is YamlList) {
           editor.appendToList(['scenes'], entry);
-        } else if (yamlNode.containsKey('records') && yamlNode['records'] is YamlList) {
+        } else if (yamlNode.containsKey('records') &&
+            yamlNode['records'] is YamlList) {
           editor.appendToList(['records'], entry);
         } else {
           editor.update(['records'], [entry]);

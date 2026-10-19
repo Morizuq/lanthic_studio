@@ -9,15 +9,32 @@ import '../models/studio_graph_models.dart';
 import '../widgets/bezier_spline_painter.dart';
 import '../widgets/graph_node_card.dart';
 
+/// Interactive visual node-graph canvas for pipeline inspection and scene cooking.
+///
+/// Visualizes the narrative pipeline as a directed acyclic graph (DAG) where nodes
+/// represent narrative entities (Story Root, Characters, Scenes) and edges represent
+/// visual and narrative dependencies rendered via [BezierSplinePainter].
+///
+/// Features:
+/// - 2D infinite pan and zoom canvas powered by [InteractiveViewer].
+/// - Interactive node cards ([GraphNodeCard]) displaying status badges, prompt hashes,
+///   and action triggers ("Cook", "Inspect", "Regenerate").
+/// - Provider selection and API key management modal integration.
+/// - Batch cooking orchestration across all scenes.
 class StudioNodeGraphView extends ConsumerStatefulWidget {
+  /// Constructs a [StudioNodeGraphView].
+  ///
+  /// * [project]: The active [StoryProject] whose scenes and characters populate the graph.
   const StudioNodeGraphView({super.key, required this.project});
 
+  /// The active story project driving the node graph topology.
   final StoryProject project;
 
   @override
   ConsumerState<StudioNodeGraphView> createState() =>
       _StudioNodeGraphViewState();
 }
+
 
 class _StudioNodeGraphViewState extends ConsumerState<StudioNodeGraphView> {
   final TransformationController _transformController =
