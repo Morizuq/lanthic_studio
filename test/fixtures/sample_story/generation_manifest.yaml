@@ -35,3 +35,14 @@ records:
     provider: qwen
     timestamp: 2026-10-17T07:24:04.084414Z
     cost_usd: 0.0
+  - scene_id: sc_001
+    status: success
+    version: 3
+    file_path: assets/sc_001/v3.png
+    asset:
+      file_path: assets/sc_001/v3.png
+      file_format: png
+    prompt_hash: 20615f492fcf7
+    provider: qwen
+    timestamp: 2026-10-19T10:23:07.664944Z
+    cost_usd: 0.0

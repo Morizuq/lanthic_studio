@@ -136,12 +136,7 @@ class StudioApprovalsModel {
 
 @immutable
 class PanelCrop {
-  const PanelCrop({
-    this.x = 0.0,
-    this.y = 0.0,
-    this.w = 1.0,
-    this.h = 1.0,
-  });
+  const PanelCrop({this.x = 0.0, this.y = 0.0, this.w = 1.0, this.h = 1.0});
 
   final double x;
   final double y;
@@ -270,7 +265,8 @@ class StudioLayoutModel {
 enum BubbleType {
   speech,
   thought,
-  caption;
+  caption,
+  soundFx;
 
   static BubbleType fromString(String? val) {
     switch (val?.toLowerCase()) {
@@ -278,9 +274,26 @@ enum BubbleType {
         return BubbleType.thought;
       case 'caption':
         return BubbleType.caption;
+      case 'sound_fx':
+      case 'soundfx':
+      case 'sfx':
+        return BubbleType.soundFx;
       case 'speech':
       default:
         return BubbleType.speech;
+    }
+  }
+
+  String get yamlValue {
+    switch (this) {
+      case BubbleType.soundFx:
+        return 'sound_fx';
+      case BubbleType.thought:
+        return 'thought';
+      case BubbleType.caption:
+        return 'caption';
+      case BubbleType.speech:
+        return 'speech';
     }
   }
 }
@@ -333,7 +346,7 @@ class DialogueBubble {
     return {
       'bubble_id': bubbleId,
       'scene_id': sceneId,
-      'type': type.name,
+      'type': type.yamlValue,
       if (speaker.isNotEmpty) 'speaker': speaker,
       'text': text,
       'x': x,

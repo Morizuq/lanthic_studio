@@ -2,13 +2,13 @@ schema_version: "1.0.0"
 approvals:
   - scene_id: "sc_001"
     status: "needs_regen"
-    selected_version: 2
+    selected_version: 3
     prompt_override: "Captain Vane staring intently at holotank console with vivid bright neon cyan-blue ocular implant glow"
     review_notes: "Eye glow is too pale in v1, fix ocular implant emission."
-    updated_at: "2026-10-14T09:30:00Z"
+    updated_at: "2026-10-19T10:23:07.683901Z"
   - scene_id: "sc_002"
-    status: "approved"
+    status: "needs_regen"
     selected_version: 2
     prompt_override: "Wide splash comic panel showing spaceship Hermes VII drifting near an ancient cracked black monolith above the icy crust of Europa. Harsh sun starburst, dark starry void, bold comic hatching."
     review_notes: "Monolith scale looks great."
-    updated_at: "2026-10-17T07:24:04.109552Z"
+    updated_at: "2026-10-19T10:22:42.978311Z"

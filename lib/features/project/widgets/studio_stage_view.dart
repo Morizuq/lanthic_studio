@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import '../../../core/utils/asset_file_helper.dart';
 import '../../../domain/models/aggregated_scene.dart';
+import '../../../domain/models/studio_models.dart';
 import '../../review/widgets/image_lightbox_dialog.dart';
 import '../providers/project_providers.dart';
+import 'comic_lettering_overlay.dart';
 import 'timeline/lanthic_video_timeline.dart';
 
 class StudioStageView extends ConsumerStatefulWidget {
@@ -217,48 +219,31 @@ class _StudioStageViewState extends ConsumerState<StudioStageView> {
                           ],
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            if (renderFile != null)
-                              GestureDetector(
-                                onTap: () => ImageLightboxDialog.show(
-                                  context,
-                                  imageFile: renderFile,
-                                  title: 'Scene $seqStr: $sceneTitle',
-                                  subtitle: activeScene.sceneModel.description,
-                                ),
-                                child: Image.file(renderFile, fit: BoxFit.cover),
-                              )
-                            else
-                              _buildGenerativeEmptyCanvas(context, seqStr, sceneTitle, activeScene),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final canvasSize = constraints.biggest;
+                            return Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                if (renderFile != null)
+                                  GestureDetector(
+                                    onTap: () => ImageLightboxDialog.show(
+                                      context,
+                                      imageFile: renderFile,
+                                      title: 'Scene $seqStr: $sceneTitle',
+                                      subtitle: activeScene.sceneModel.description,
+                                    ),
+                                    child: Image.file(renderFile, fit: BoxFit.cover),
+                                  )
+                                else
+                                  _buildGenerativeEmptyCanvas(context, seqStr, sceneTitle, activeScene),
 
-                            // Dialogue bubble overlay on the stage
-                            if (_showDialogueOverlay && activeScene.sceneModel.dialogue.isNotEmpty)
-                              Positioned(
-                                top: 32,
-                                left: 40,
-                                right: 40,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.8),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFF00B8FF).withValues(alpha: 0.4)),
-                                    ),
-                                    child: Text(
-                                      '"${activeScene.sceneModel.dialogue.first.text}"',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontStyle: FontStyle.italic,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                // Comic dialogue balloons & lettering overlay
+                                if (_showDialogueOverlay)
+                                  ComicLetteringOverlay(
+                                    bubbles: _getEffectiveDialogueBubbles(activeScene),
+                                    canvasSize: canvasSize,
                                   ),
-                                ),
-                              ),
 
                             // Bottom-left title overlay
                             Positioned(
@@ -327,7 +312,9 @@ class _StudioStageViewState extends ConsumerState<StudioStageView> {
                               ),
                             ),
                           ],
-                        ),
+                        );
+                      },
+                    ),
                       ),
                     ),
                   ),
@@ -505,6 +492,34 @@ class _StudioStageViewState extends ConsumerState<StudioStageView> {
         ),
       ),
     );
+  }
+
+  List<DialogueBubble> _getEffectiveDialogueBubbles(AggregatedScene scene) {
+    if (scene.dialogueBubbles.isNotEmpty) {
+      return scene.dialogueBubbles;
+    }
+    if (scene.sceneModel.dialogue.isEmpty) {
+      return const [];
+    }
+    final bubbles = <DialogueBubble>[];
+    for (var i = 0; i < scene.sceneModel.dialogue.length; i++) {
+      final line = scene.sceneModel.dialogue[i];
+      final isEven = i % 2 == 0;
+      bubbles.add(
+        DialogueBubble(
+          bubbleId: 'auto_${scene.sceneId}_$i',
+          sceneId: scene.sceneId,
+          type: BubbleType.speech,
+          speaker: line.speaker,
+          text: line.text,
+          x: isEven ? 0.08 : 0.48,
+          y: 0.08 + (i * 0.16).clamp(0.0, 0.40),
+          tailTargetX: isEven ? 0.35 : 0.65,
+          tailTargetY: 0.55,
+        ),
+      );
+    }
+    return bubbles;
   }
 
   Widget _buildInteractiveTool(int index, IconData icon, String tooltip, ColorScheme colorScheme, {VoidCallback? onTap}) {
